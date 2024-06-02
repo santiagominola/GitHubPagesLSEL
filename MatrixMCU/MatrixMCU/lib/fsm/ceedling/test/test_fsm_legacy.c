@@ -56,11 +56,12 @@ void tearDown(void)
  */
 void test_fsm_new_nullWhenNullTransition(void)
 {
-    fsm_t *f = (fsm_t*)1;
+    fsm_t *f = (fsm_t*)1; //inicializas la fsm y apuntas el puntero al valor de dirección 1
 
-    f = fsm_new(NULL);
+    f = fsm_new(NULL); //metes en la tabla de transiciones NULL
 
-    TEST_ASSERT_EQUAL (NULL, f);
+    TEST_ASSERT_EQUAL (NULL, f); //compruebas que el puntero que te da al meter NULL tambien te devuelve NULL
+	//fsm_malloc es guardar memoria
 }
 
 /**
@@ -69,7 +70,14 @@ void test_fsm_new_nullWhenNullTransition(void)
  */
 void test_fsm_init_falseWhenNullFsm(void)
 {
-    TEST_IGNORE();
+    //mirar el fsm_init la funcion en el fsm.c
+	fsm_trans_t tt = (fsm_trans_t*)1; //para tablas de transiones inicialización
+	bool resultado = fsm_init(NULL,tt); // 
+	TEST_ASSERT_EQUAL (false, f); //compruebas que devuelve false
+	
+	//tambien se puede poner int en lugar de bool y en lugar de false pones 0
+	
+	
 }
 
 /**
@@ -78,7 +86,9 @@ void test_fsm_init_falseWhenNullFsm(void)
  */
 void test_fsm_init_falseWhenNullTransitions(void)
 {
-    TEST_IGNORE();
+    fsm_t *f = (fsm_t*)1; 
+	bool resultado = fsm_init(f,NULL);  
+	TEST_ASSERT_EQUAL (false, resultado); 
 }
 
 /**
@@ -87,12 +97,14 @@ void test_fsm_init_falseWhenNullTransitions(void)
 *        de la primera transición es -1 (fin de la tabla)
 */
 void test_fsm_nullWhenFirstOrigStateIsMinusOne (void) {
-  fsm_trans_t tt[] = {{-1, is_true, 1, do_nothing}};
+  fsm_trans_t tt[] = {{-1, is_true, 1, do_nothing}}; //un array es como un puntero en c
   fsm_t *f = (fsm_t*)1;
   f = fsm_new(tt);
  
-//TEST_ASSERT_EQUAL (XXX);
+  TEST_ASSERT_EQUAL (NULL,f);
   TEST_FAIL_MESSAGE("Implement the test");
+  //mocks son funciones que simulan otras funciones, cuando quieres que una funcion que no se va a utilizar quieres que te devuleva algo concreto
+  //en test_fsm.h ponemos las funciones que queremos mockear
 }
 
 /**
@@ -100,8 +112,12 @@ void test_fsm_nullWhenFirstOrigStateIsMinusOne (void) {
  * 
  */
 void test_fsm_nullWhenFirstDstStateIsMinusOne (void) {
-  
-  TEST_IGNORE();
+  fsm_trans_t tt[] = {{1, is_true, -1, do_nothing}}; //un array es como un puntero en c
+  fsm_t *f = (fsm_t*)1;
+  f = fsm_new(tt);
+ 
+  TEST_ASSERT_EQUAL (NULL,f);
+  TEST_FAIL_MESSAGE("Implement the test");
 }
 
 /**
@@ -109,28 +125,43 @@ void test_fsm_nullWhenFirstDstStateIsMinusOne (void) {
  * 
  */
 void test_fsm_nullWhenFirstCheckFunctionIsNull (void) {
-  
-  TEST_IGNORE();
+	
+  fsm_trans_t tt[] = {{1, NULL, 1, do_nothing}}; //un array es como un puntero en c
+  fsm_t *f = (fsm_t*)1;
+  f = fsm_new(tt);
+ 
+  TEST_ASSERT_EQUAL (NULL,f);
 }
 
 /**
- * @brief Devuelve puntero no NULL y llama a fsm_malloc (Stub) al crear la maquina de estados con una transición válida con función de actualización (salida) NULL o no NULL.
+ * @brief Devuelve puntero no NULL y llama a fsm_malloc (AddCallback) al crear la maquina de estados con una transición válida con función de actualización (salida) NULL o no NULL.
  *        Hay que liberar la memoria al final llamando a free
  * 
  */
 TEST_CASE(NULL)
-TEST_CASE(do_nothing)
+TEST_CASE(do_nothing) //tiene que salir las dos opciones con el tick verde al pasar el test
 void test_fsm_new_nonNullWhenOneValidTransitionCondition(fsm_output_func_t out)
 {
+	//el stub es el mock que simula la funcion y devuelve lo que tu quieres simular, no reserva las posiciones de memoria
+	//el Callback si que reserva la dirección de memoria porque si que llama la función 
+	//en esta hay que comprobar que se va a reservar bien las posiciones de memoria ya que la función si que lo hará
     fsm_trans_t tt[] = {
-        //{},
+        {1, is_true, 1, out}, //para comprobar las dos opciones (NULL y do_nothing) con el TEST_CASE, variable entrada función
         {-1, NULL, -1, NULL}
     };
-     fsm_t *f = (fsm_t*)1;
+	
+	// ver mocks en ceedling->build->test->mocks (mejor ir al .h) para ver las funciones de stub y callback (tambien estan en las diapos)
+	 fsm_malloc_AddCallback(cb_malloc); //para llamar al malloc con Callback (tiene que hacerse antes de llamar a la funicón fsm)
+	 fsm_malloc_ExpectAnyArgsAndReturn(0); //espera a que la llame, no cal especificar los valores de entrada, 
+	//0 es el valor que quieres que te devuelva, aunque te da igual ya que al hacer Callback ya te devuelve lo que quieres
+     fsm_t *f = (fsm_t*)1; //puntero de la fsm
+	 f = fsm_new(tt);//f es lo que te devuleve de fsm_new al meter la tabla de transiciones
+		
+	
+     TEST_ASSERT_NOT_EQUAL (NULL,f); //comprobación de que NO da NULL, transición buena, por lo que va a llamar a malloc
 
-     TEST_IGNORE();
-
-     free(f);
+     free(f); //porque la tabla de transición no es NULL por lo que va a llamar a fsm_malloc (mirar fsm_new.c) por lo que hay que liberarlo
+	 //poner tantas veces como llamas a malloc
 }
 
 
@@ -140,8 +171,19 @@ void test_fsm_new_nonNullWhenOneValidTransitionCondition(fsm_output_func_t out)
  */
 void test_fsm_new_fsmGetStateReturnsOrigStateOfFirstTransitionAfterInit(void)
 {
-
-    TEST_IGNORE();
+   fsm_trans_t tt[] = {
+        {0, is_true, 1, do_nothing}, //para no confundirse entre los dos estados
+        {-1, NULL, -1, NULL}
+    };
+	//si no se hace un malloc da error porque la llama ya que no da NULL por lo que hay que hacer un Callback
+	 fsm_malloc_AddCallback(cb_malloc); 
+	 fsm_malloc_ExpectAnyArgsAndReturn(0);
+	 fsm_t *f = (fsm_t*)1; //puntero de la fsm
+	 f = fsm_new(tt);
+	 int state = fsm_get_state(f); //te da el estado del puntero f y se guarda en state
+	
+    TEST_ASSERT_EQUAL (0,sate); //que es el primer estado
+	//TEST_ASSERT_EQUAL (0,fsm_get_state(f)); //tambien es correcto
 }
 
 /**
@@ -154,13 +196,17 @@ void test_fsm_fire_isTrueReturnsFalseMeansDoNothingIsNotCalledAndStateKeepsTheSa
         {0, is_true, 1, do_nothing},
         {-1, NULL, -1, NULL}
     };
-
-    fsm_t f;
+  //hay que obligar con un mock a que is_true sea  para que no transicione, hay que hacer un stub ya que is_true no es una funcion como tal
+    is_true_ExpectAnyArgsAndReturn(0); //is_true ya es un mock de por si
+	fsm_t f;
     int res;
     fsm_init(&f, tt);
-    res = fsm_get_state(&f);
+    res = fsm_get_state(&f); //estado actual
+	fsm_fire(&f); //obligas a que transicione, a que se active la maquina
+	int res2 = fsm_get_state(&f); //estado al transicionar
+	TEST_ASSERT_EQUAL (res,res2); //compara los dos estados para ver si ha transicionado
 
-   TEST_IGNORE();
+   
 }
 
 /**
@@ -174,8 +220,14 @@ void test_fsm_fire_checkFunctionCalledWithFsmPointerFromFsmFire(void)
         {0, is_true, 1, NULL},
         {-1, NULL, -1, NULL}
     };
+	
+	// fsm_new y fsm_init hacen lo mismo pero lo que cambia es como le das los argumentos
+	//para comprobar que ha pasado una transicion hay que hacer un fsm_fire
+	fsm_t f;
+	is_true_ExpectAndReturn(&f,true);  //tiene que ser f lo que le llegue y si le llega que haga true
+	fsm_init(&f,tt)
+	fsm_fire(&f); //no cal test assert ya que si falla ya sabes que no pasa test
 
-    TEST_IGNORE();
 }
 
 /** 
@@ -184,15 +236,19 @@ void test_fsm_fire_checkFunctionCalledWithFsmPointerFromFsmFire(void)
  */
 TEST_CASE(false, 0)
 TEST_CASE(true, 1)
-void test_fsm_fire_checkFunctionIsCalledAndResultIsImportantForTransition(bool returnValue, int expectedState)
+void test_fsm_fire_checkFunctionIsCalledAndResultIsImportantForTransition(bool returnValue, int expectedState) //returnValue es el valor que quieres de is_true y expectedState es el estado que quieres al transicionar
 {
     fsm_trans_t tt[] = {
         {0, is_true, 1, NULL},
         {-1, NULL, -1, NULL}
     };
+	is_true_ExpectAnyArgsAndReturn(returnValue); //para que is_true haga lo que queremos del case
     fsm_t f;
     fsm_init(&f, tt);
-    TEST_IGNORE();
+	fsm_fire(&f); //hacer que transicione
+	int state = fsm_get_state(&f)//coger el estado despues de transicionar
+	TEST_ASSERT_EQUAL(expectedState, sta)
+    
 }
 
 
@@ -228,7 +284,7 @@ void test_fsm_fire_callsFirstIsTrueFromState0AndThenIsTrue2FromState1(void)
 {
     fsm_trans_t tt[] = {
         {0, is_true, 1, NULL},
-        //{1, is_true2, 0, NULL},   //Descomentar cuando se haya declarado una nueva función para mock is_true2
+        //{1, is_true2, 0, NULL},   //Descomentar cuando se haya declarado una nueva función para mock is_true2 //significa que lo metamos el is_true2 en el test_fsm.h
         {-1, NULL, -1, NULL}
     };
 
@@ -236,8 +292,13 @@ void test_fsm_fire_callsFirstIsTrueFromState0AndThenIsTrue2FromState1(void)
     int res;
     fsm_init(&f, tt);
     res = fsm_get_state(&f);
+	
+	is_true_ExpectAnyArgsAndReturn(true);
+	fsm_fire(&f); //primera transicion de is_true
+	is_true2_ExpectAnyArgsAndReturn(true);
+	fsm_fire(&f); //para la trasnsicion de is_true2
 
-    TEST_IGNORE();
+    
 }
 
 /**
@@ -253,4 +314,35 @@ void test_fsm_new_calledTwiceWithSameValidDataCreatesDifferentInstancePointer(vo
 
     TEST_IGNORE();
 }
+
+//----------------------TDD-----------------------------------------
+TEST_CASE(0,0);//para comprobar las 3 opciones que nos piden, y pones lo que quieres que te devuelva si son esos casos
+TEST_CASE(128,128);
+TEST_CASE(129,0);
+void test_fsm_init_returniIntNumValidTransitionsEqualFSM_MAX_TRANSITIONS(int numTransition, int expectedTransition)
+{
+	fsm_trans_t tt[numTransition+1]; //el +1 es por la última fila no valida (el -1,NULL,-1,NULL)
+    for(i=0;i<numTransition;i++) {
+        tt[i].orig_state = 0;
+        tt[i].in = is_true;
+        tt[i].dest_state = 1;
+        tt[i].out = do_nothing;
+    }
+	
+	//es la última fila de -1,NULL,-1,NULL que se pone al final de la maquina de estado   
+	tti[i].orig_state = -1;
+    tti[i].in = NULL;
+    tti[i].dest_state = -1;
+    tti[i].out = NULL;
+	
+	fsm_t f;
+    fsm_init(&f, tt);
+	
+	int num = fsm_init(&f, tt)
+	
+	TEST_ASSERT_EQUAL(num, expectedTransition);
+	
+}
+
+
 
