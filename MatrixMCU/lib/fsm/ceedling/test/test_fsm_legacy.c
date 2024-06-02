@@ -179,11 +179,14 @@ void test_fsm_fire_isTrueReturnsFalseMeansDoNothingIsNotCalledAndStateKeepsTheSa
         {-1, NULL, -1, NULL}};
 
     fsm_t f;
-    int res;
+    int res, res2;
     fsm_init(&f, tt);
     res = fsm_get_state(&f);
+    is_true_ExpectAnyArgsAndReturn(false);
+    fsm_fire(&f);
+    res2 = fsm_get_state(&f);
 
-    TEST_IGNORE();
+    TEST_ASSERT_EQUAL(res,res2);
 }
 
 /**
@@ -192,12 +195,13 @@ void test_fsm_fire_isTrueReturnsFalseMeansDoNothingIsNotCalledAndStateKeepsTheSa
  */
 void test_fsm_fire_checkFunctionCalledWithFsmPointerFromFsmFire(void)
 {
-
     fsm_trans_t tt[] = {
         {0, is_true, 1, NULL},
         {-1, NULL, -1, NULL}};
-
-    TEST_IGNORE();
+    fsm_t f;
+    is_true_ExpectAndReturn(&f,true);
+    fsm_init(&f,tt);
+    fsm_fire(&f);
 }
 
 /**
@@ -213,7 +217,10 @@ void test_fsm_fire_checkFunctionIsCalledAndResultIsImportantForTransition(bool r
         {-1, NULL, -1, NULL}};
     fsm_t f;
     fsm_init(&f, tt);
-    TEST_IGNORE();
+    is_true_ExpectAndReturn(&f,returnValue);
+    fsm_fire(&f);
+    int state = fsm_get_state(&f);
+    TEST_ASSERT_EQUAL(state, expectedState);
 }
 
 /**
@@ -226,8 +233,12 @@ void test_fsm_new_nullWhenFsmMallocReturnsNull(void)
         {0, is_true, 1, NULL},
         {1, is_true, 0, NULL},
         {-1, NULL, -1, NULL}};
+    
+    fsm_malloc_ExpectAnyArgsAndReturn(NULL);
+    fsm_t *f;
+    f = fsm_new(tt);
 
-    TEST_IGNORE();
+    TEST_ASSERT_EQUAL(f, NULL);
 }
 
 /**
@@ -236,7 +247,9 @@ void test_fsm_new_nullWhenFsmMallocReturnsNull(void)
  */
 void test_fsm_destroy_callsFsmFree(void)
 {
-    TEST_IGNORE();
+    fsm_t *f = (fsm_t *)1;
+    fsm_free_ExpectAnyArgs();
+    fsm_destroy(f);
 }
 
 /**
@@ -247,15 +260,20 @@ void test_fsm_fire_callsFirstIsTrueFromState0AndThenIsTrue2FromState1(void)
 {
     fsm_trans_t tt[] = {
         {0, is_true, 1, NULL},
-        //{1, is_true2, 0, NULL},   //Descomentar cuando se haya declarado una nueva función para mock is_true2
+        {1, is_true2, 0, NULL},   //Descomentar cuando se haya declarado una nueva función para mock is_true2
         {-1, NULL, -1, NULL}};
 
     fsm_t f;
-    int res;
+    int state1,state2;
     fsm_init(&f, tt);
-    res = fsm_get_state(&f);
+    state1 = fsm_get_state(&f);
+    is_true_ExpectAnyArgsAndReturn(true);
+    fsm_fire(&f);
+    is_true2_ExpectAnyArgsAndReturn(true);
+    fsm_fire(&f);
+    state2 = fsm_get_state(&f);
 
-    TEST_IGNORE();
+    TEST_ASSERT_EQUAL(state1,state2);
 }
 
 /**
@@ -267,6 +285,8 @@ void test_fsm_new_calledTwiceWithSameValidDataCreatesDifferentInstancePointer(vo
     fsm_trans_t tt[] = {
         {0, is_true, 1, NULL},
         {-1, NULL, -1, NULL}};
-
-    TEST_IGNORE();
+    fsm_malloc_Stub(cb_malloc);
+    fsm_t *f1 = fsm_new(tt);
+    fsm_t *f2 =fsm_new(tt);
+    TEST_ASSERT_NOT_EQUAL(f1,f2);
 }
